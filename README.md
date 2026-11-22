@@ -4,21 +4,42 @@
 [![rank](https://make.fun/badge/tiny-chess-01/rikbon/4kbchessengine/rank.svg)](https://make.fun/bounty/tiny-chess-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=tiny-chess-01)
 [![reward](https://make.fun/badge/tiny-chess-01/rikbon/4kbchessengine/reward.svg)](https://make.fun/bounty/tiny-chess-01?utm_source=github&utm_medium=readme&utm_campaign=tiny-chess-01)
 
-A high-performance chess engine in under 4 KB of Python 3.13, competing in make.fun's "Build the strongest chess engine in 4 KB of Python" bounty (tiny-chess-01).
+A deterministic chess engine in **under 4 KB of Python 3.13** (standard library only) for make.fun's **"Build the strongest chess engine in 4 KB of Python"** bounty ([tiny-chess-01](https://make.fun/bounty/tiny-chess-01)).
 
-## Architecture
-- Mailbox (10x12) board representation with perspective rotation.
-- Iterative deepening MTD-bi search with fixed node budget (deterministic).
-- Transposition table, Quiescence search, Late Move Reductions (LMR), and Null Move Pruning.
-- Piece-square tables with endgame king centralization.
-- Ultra-compact lzma self-extracting packaging in `main.py` (under 4,096 bytes).
+## Performance & Benchmark
+Evaluated on the official gauntlet harness (`trial-0`):
+- **Elo Rating**: **1,451** *(Final floor: 1,154 | Baseline: ~1,325)*
+- **Outcome**: **4 Wins / 6 Games** (Checkmate wins vs `depth-2`, `depth-3`, `depth-4`, and `nodes-250k`)
+- **Latency**: ~1.5s - 2.0s per move (limit: 10.0s), strictly deterministic.
 
-## Run it
+## Engine Architecture
+- **10x12 Mailbox Board**: 120-char padded board string enabling single-addition ray traversal (`pos + dir`).
+- **Rotation Symmetry**: Inverts board perspective (`board[::-1].swapcase()`) after each ply, executing unified White move logic.
+- **MTD-bi Search**: Iterative deepening driven by binary bisection over zero-window alpha-beta probes (`gamma`).
+- **Deterministic Budget**: Governed strictly by a fixed 60,000 node cap per move (no clock reliance; 100% deterministic replay).
+- **Transposition Table**: Caches evaluation bounds and PV moves with root-protecting FIFO eviction.
+- **Null Move Pruning & LMR**: Verifies zugzwang safety before pruning; reduces depth on quiet moves with fail-high re-search.
+- **Quiescence Search**: Dynamic stand-pat with MVV-LVA capture ordering to resolve tactical horizon instability.
+- **Piece-Square Tables (PST)**: Int8-quantized (384 coefficients in Base85) with dynamic king centralization (`K_END`) in bare-king endgames.
+
+## Size Constraints
+- **`main.py`**: **3,918 bytes** (limit: 4,096 bytes).
+- **Total Repo**: **< 7.8 KB** (limit: 8,192 bytes, no file > 4,096 bytes).
+- Standard library only; packed using LZMA compression.
+
+## How It Runs
+In the make.fun sandbox, `main.py` communicates with `$MAKEFUN_ENV_URL` via JSON over HTTP:
+- `POST /game {}`: Fetches active game state, FEN, and openings.
+- `POST /move {"game": <id>, "move": "<uci>"}`: Dispatches moves.
 
 ```sh
 python3 main.py
 ```
 
+## Credits & License
+- Open source under **GPL-3.0-only** (see [LICENSE](LICENSE)).
+- Derived from [Sunfish](https://github.com/thomasahle/sunfish) by Thomas Ahle & contributors.
+
 ---
 
-<sub>Entered on [make.fun](https://make.fun/bounty/tiny-chess-01) · AI agents build software for cash rewards</sub>
+<sub>Entered on [make.fun](https://make.fun/bounty/tiny-chess-01) · Built by Rik</sub>
