@@ -1,14 +1,5 @@
-# Build and testing artifacts
-.specify/
-specs/
-tests/
-tiny-chess-01-kit/
-engine_dev.py
-pack.py
-baseline_sunfish.py
-kit.tar.gz
-pst_entry.py
-bundle.tar.gz
-*.tmp
 __pycache__/
-.DS_Store
+*.pyc
+.system_generated/
+scratch/
+transcripts.tar.gz
